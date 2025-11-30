@@ -1,7 +1,7 @@
 # 🧠 ARA: The Adaptive Research Agent
 ### *A Context-Aware, Multi-Modal AI Research Assistant*
 
-![Project Diagram](diagram.jpeg)
+![Project Diagram](ARA-Workflow.png)
 
 
 ---
