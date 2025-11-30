@@ -1,0 +1,554 @@
+﻿{
+  "created": "1764510511858",
+  "updated": "1764510511858",
+  "name": "ARA ",
+  "description": "",
+  "tags": [],
+  "pieces": [
+    "@activepieces/piece-webhook",
+    "@activepieces/piece-socialkit",
+    "@activepieces/piece-google-gemini",
+    "@activepieces/piece-pdf",
+    "@activepieces/piece-jina-ai"
+  ],
+  "template": {
+    "displayName": "ARA ",
+    "trigger": {
+      "name": "trigger",
+      "valid": true,
+      "displayName": "Catch Webhook",
+      "type": "PIECE_TRIGGER",
+      "settings": {
+        "propertySettings": {
+          "authType": {
+            "type": "MANUAL"
+          },
+          "authFields": {
+            "type": "MANUAL",
+            "schema": {}
+          },
+          "liveMarkdown": {
+            "type": "MANUAL"
+          },
+          "syncMarkdown": {
+            "type": "MANUAL"
+          },
+          "testMarkdown": {
+            "type": "MANUAL"
+          }
+        },
+        "pieceName": "@activepieces/piece-webhook",
+        "pieceVersion": "~0.1.25",
+        "input": {
+          "authType": "none",
+          "authFields": {}
+        },
+        "sampleData": {},
+        "triggerName": "catch_webhook"
+      },
+      "nextAction": {
+        "name": "step_1",
+        "skip": false,
+        "type": "ROUTER",
+        "valid": true,
+        "children": [
+          {
+            "name": "step_2",
+            "type": "PIECE",
+            "valid": true,
+            "settings": {
+              "input": {
+                "url": "{{trigger['body']['content']}}",
+                "auth": "{{connections['FbDe8rf2f14o7sqxYR7EL']}}"
+              },
+              "pieceName": "@activepieces/piece-socialkit",
+              "actionName": "get_youtube_transcript",
+              "sampleData": {},
+              "pieceVersion": "~0.0.2",
+              "propertySettings": {
+                "url": {
+                  "type": "MANUAL"
+                },
+                "auth": {
+                  "type": "MANUAL"
+                }
+              },
+              "errorHandlingOptions": {
+                "retryOnFailure": {
+                  "value": false
+                },
+                "continueOnFailure": {
+                  "value": false
+                }
+              }
+            },
+            "nextAction": {
+              "name": "step_3",
+              "skip": false,
+              "type": "PIECE",
+              "valid": true,
+              "settings": {
+                "input": {
+                  "auth": "{{connections['lA38YPkCkTobNYMjdsol2']}}",
+                  "model": "gemini-2.5-flash",
+                  "prompt": "You are an expert Research Assistant.\nI will provide you with content and a specific \"Focus Topic\".\nYour Goal: Analyze the content and extract ONLY information relevant to the Focus Topic. Ignore everything else.\n---\nFOCUS TOPIC: [{{trigger['body']['topic']}}]\nCONTENT: [{{step_2['transcript']}}]\n---\nIf the content contains nothing related to the Focus Topic, just say: \"No relevant information found for this topic.\"\nOtherwise, provide a detailed summary strictly about the Focus Topic."
+                },
+                "pieceName": "@activepieces/piece-google-gemini",
+                "actionName": "generate_content",
+                "sampleData": {},
+                "pieceVersion": "~0.0.23",
+                "propertySettings": {
+                  "auth": {
+                    "type": "MANUAL"
+                  },
+                  "model": {
+                    "type": "MANUAL"
+                  },
+                  "prompt": {
+                    "type": "MANUAL"
+                  }
+                },
+                "errorHandlingOptions": {
+                  "retryOnFailure": {
+                    "value": false
+                  },
+                  "continueOnFailure": {
+                    "value": false
+                  }
+                }
+              },
+              "nextAction": {
+                "name": "step_4",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "fields": {
+                      "body": "{{step_3}}",
+                      "status": 200,
+                      "headers": {}
+                    },
+                    "respond": "stop",
+                    "responseType": "raw"
+                  },
+                  "pieceName": "@activepieces/piece-webhook",
+                  "actionName": "return_response",
+                  "sampleData": {},
+                  "pieceVersion": "~0.1.25",
+                  "propertySettings": {
+                    "fields": {
+                      "type": "MANUAL",
+                      "schema": {
+                        "body": {
+                          "type": "LONG_TEXT",
+                          "required": true,
+                          "displayName": "Raw Body"
+                        },
+                        "status": {
+                          "type": "NUMBER",
+                          "required": false,
+                          "displayName": "Status",
+                          "defaultValue": 200
+                        },
+                        "headers": {
+                          "type": "OBJECT",
+                          "required": false,
+                          "displayName": "Headers"
+                        }
+                      }
+                    },
+                    "respond": {
+                      "type": "MANUAL"
+                    },
+                    "responseType": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "displayName": "Return Response"
+              },
+              "displayName": "Generate Content"
+            },
+            "displayName": "Get YouTube Transcript"
+          },
+          {
+            "name": "step_5",
+            "skip": false,
+            "type": "ROUTER",
+            "valid": true,
+            "children": [
+              {
+                "name": "step_6",
+                "skip": false,
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "file": "{{trigger['body']['content']}}"
+                  },
+                  "pieceName": "@activepieces/piece-pdf",
+                  "actionName": "extractText",
+                  "sampleData": {},
+                  "pieceVersion": "~0.2.17",
+                  "propertySettings": {
+                    "file": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_7",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "auth": "{{connections['lA38YPkCkTobNYMjdsol2']}}",
+                      "model": "gemini-2.5-flash",
+                      "prompt": "You are an expert Research Assistant.\nI will provide you with content and a specific \"Focus Topic\".\nYour Goal: Analyze the content and extract ONLY information relevant to the Focus Topic. Ignore everything else.\n---\nFOCUS TOPIC: [{{trigger['body']['topic']}}]\nCONTENT: [{{step_6}}]\n---\nIf the content contains nothing related to the Focus Topic, just say: \"No relevant information found for this topic.\"\nOtherwise, provide a detailed summary strictly about the Focus Topic."
+                    },
+                    "pieceName": "@activepieces/piece-google-gemini",
+                    "actionName": "generate_content",
+                    "sampleData": {},
+                    "pieceVersion": "~0.0.23",
+                    "propertySettings": {
+                      "auth": {
+                        "type": "MANUAL"
+                      },
+                      "model": {
+                        "type": "MANUAL"
+                      },
+                      "prompt": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_8",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "fields": {
+                          "body": "{{step_7}}",
+                          "status": 200,
+                          "headers": {}
+                        },
+                        "respond": "stop",
+                        "responseType": "raw"
+                      },
+                      "pieceName": "@activepieces/piece-webhook",
+                      "actionName": "return_response",
+                      "sampleData": {},
+                      "pieceVersion": "~0.1.25",
+                      "propertySettings": {
+                        "fields": {
+                          "type": "MANUAL",
+                          "schema": {
+                            "body": {
+                              "type": "LONG_TEXT",
+                              "required": true,
+                              "displayName": "Raw Body"
+                            },
+                            "status": {
+                              "type": "NUMBER",
+                              "required": false,
+                              "displayName": "Status",
+                              "defaultValue": 200
+                            },
+                            "headers": {
+                              "type": "OBJECT",
+                              "required": false,
+                              "displayName": "Headers"
+                            }
+                          }
+                        },
+                        "respond": {
+                          "type": "MANUAL"
+                        },
+                        "responseType": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Return Response"
+                  },
+                  "displayName": "Generate Content"
+                },
+                "displayName": "Extract Text"
+              },
+              {
+                "name": "step_9",
+                "type": "PIECE",
+                "valid": true,
+                "settings": {
+                  "input": {
+                    "url": "{{trigger['body']['content']}}",
+                    "auth": "{{connections['KvQojYv3gko18jBEP3Kwb']}}",
+                    "format": "default",
+                    "do_not_track": false,
+                    "eu_compliance": false,
+                    "json_response": false,
+                    "links_summary": "none",
+                    "images_summary": "none",
+                    "follow_redirect": false,
+                    "timeout_seconds": 0,
+                    "iframe_extraction": false,
+                    "remove_all_images": false,
+                    "shadow_dom_extraction": false
+                  },
+                  "pieceName": "@activepieces/piece-jina-ai",
+                  "actionName": "extract_webpage_content",
+                  "sampleData": {},
+                  "pieceVersion": "~0.0.5",
+                  "propertySettings": {
+                    "url": {
+                      "type": "MANUAL"
+                    },
+                    "auth": {
+                      "type": "MANUAL"
+                    },
+                    "format": {
+                      "type": "MANUAL"
+                    },
+                    "css_selector": {
+                      "type": "MANUAL"
+                    },
+                    "do_not_track": {
+                      "type": "MANUAL"
+                    },
+                    "eu_compliance": {
+                      "type": "MANUAL"
+                    },
+                    "json_response": {
+                      "type": "MANUAL"
+                    },
+                    "links_summary": {
+                      "type": "MANUAL"
+                    },
+                    "images_summary": {
+                      "type": "MANUAL"
+                    },
+                    "follow_redirect": {
+                      "type": "MANUAL"
+                    },
+                    "timeout_seconds": {
+                      "type": "MANUAL"
+                    },
+                    "exclude_selector": {
+                      "type": "MANUAL"
+                    },
+                    "iframe_extraction": {
+                      "type": "MANUAL"
+                    },
+                    "remove_all_images": {
+                      "type": "MANUAL"
+                    },
+                    "wait_for_selector": {
+                      "type": "MANUAL"
+                    },
+                    "shadow_dom_extraction": {
+                      "type": "MANUAL"
+                    }
+                  },
+                  "errorHandlingOptions": {
+                    "retryOnFailure": {
+                      "value": false
+                    },
+                    "continueOnFailure": {
+                      "value": false
+                    }
+                  }
+                },
+                "nextAction": {
+                  "name": "step_10",
+                  "skip": false,
+                  "type": "PIECE",
+                  "valid": true,
+                  "settings": {
+                    "input": {
+                      "auth": "{{connections['lA38YPkCkTobNYMjdsol2']}}",
+                      "model": "gemini-2.5-flash",
+                      "prompt": "You are an expert Research Assistant.\nI will provide you with content and a specific \"Focus Topic\".\nYour Goal: Analyze the content and extract ONLY information relevant to the Focus Topic. Ignore everything else.\n---\nFOCUS TOPIC: [{{trigger['body']['topic']}}]\nCONTENT: [{{step_9['data']['content']}}]\n---\nIf the content contains nothing related to the Focus Topic, just say: \"No relevant information found for this topic.\"\nOtherwise, provide a detailed summary strictly about the Focus Topic."
+                    },
+                    "pieceName": "@activepieces/piece-google-gemini",
+                    "actionName": "generate_content",
+                    "sampleData": {},
+                    "pieceVersion": "~0.0.23",
+                    "propertySettings": {
+                      "auth": {
+                        "type": "MANUAL"
+                      },
+                      "model": {
+                        "type": "MANUAL"
+                      },
+                      "prompt": {
+                        "type": "MANUAL"
+                      }
+                    },
+                    "errorHandlingOptions": {
+                      "retryOnFailure": {
+                        "value": false
+                      },
+                      "continueOnFailure": {
+                        "value": false
+                      }
+                    }
+                  },
+                  "nextAction": {
+                    "name": "step_11",
+                    "skip": false,
+                    "type": "PIECE",
+                    "valid": true,
+                    "settings": {
+                      "input": {
+                        "fields": {
+                          "body": "{{step_10}}",
+                          "status": 200,
+                          "headers": {}
+                        },
+                        "respond": "stop",
+                        "responseType": "raw"
+                      },
+                      "pieceName": "@activepieces/piece-webhook",
+                      "actionName": "return_response",
+                      "sampleData": {},
+                      "pieceVersion": "~0.1.25",
+                      "propertySettings": {
+                        "fields": {
+                          "type": "MANUAL",
+                          "schema": {
+                            "body": {
+                              "type": "LONG_TEXT",
+                              "required": true,
+                              "displayName": "Raw Body"
+                            },
+                            "status": {
+                              "type": "NUMBER",
+                              "required": false,
+                              "displayName": "Status",
+                              "defaultValue": 200
+                            },
+                            "headers": {
+                              "type": "OBJECT",
+                              "required": false,
+                              "displayName": "Headers"
+                            }
+                          }
+                        },
+                        "respond": {
+                          "type": "MANUAL"
+                        },
+                        "responseType": {
+                          "type": "MANUAL"
+                        }
+                      },
+                      "errorHandlingOptions": {
+                        "retryOnFailure": {
+                          "value": false
+                        },
+                        "continueOnFailure": {
+                          "value": false
+                        }
+                      }
+                    },
+                    "displayName": "Return Response"
+                  },
+                  "displayName": "Generate Content"
+                },
+                "displayName": "Extract Webpage Content"
+              }
+            ],
+            "settings": {
+              "branches": [
+                {
+                  "branchName": "Branch 1",
+                  "branchType": "CONDITION",
+                  "conditions": [
+                    [
+                      {
+                        "operator": "TEXT_ENDS_WITH",
+                        "firstValue": "{{trigger['body']['content']}}",
+                        "secondValue": ".pdf",
+                        "caseSensitive": false
+                      }
+                    ]
+                  ]
+                },
+                {
+                  "branchName": "Otherwise",
+                  "branchType": "FALLBACK"
+                }
+              ],
+              "sampleData": {},
+              "executionType": "EXECUTE_FIRST_MATCH"
+            },
+            "displayName": "Router"
+          }
+        ],
+        "settings": {
+          "branches": [
+            {
+              "branchName": "Branch 1",
+              "branchType": "CONDITION",
+              "conditions": [
+                [
+                  {
+                    "operator": "TEXT_CONTAINS",
+                    "firstValue": "{{trigger['body']['content']}}",
+                    "secondValue": "YouTube",
+                    "caseSensitive": false
+                  }
+                ]
+              ]
+            },
+            {
+              "branchName": "Otherwise",
+              "branchType": "FALLBACK"
+            }
+          ],
+          "sampleData": {},
+          "executionType": "EXECUTE_FIRST_MATCH"
+        },
+        "displayName": "Router"
+      }
+    },
+    "valid": true,
+    "schemaVersion": "8"
+  },
+  "blogUrl": ""
+}
